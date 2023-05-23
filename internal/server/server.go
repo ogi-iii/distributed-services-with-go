@@ -4,6 +4,7 @@ import (
 	"context"
 
 	api "github.com/ogi-iii/proglog/api/v1"
+	"google.golang.org/grpc"
 )
 
 type Config struct {
@@ -29,6 +30,16 @@ func newGrpcServer(config *Config) (srv *grpcServer, err error) {
 	return srv, nil
 }
 
+func NewGRPCServer(config Config) (*grpc.Server, error) {
+	gsrv := grpc.NewServer()
+	srv, err := newGrpcServer(&config)
+	if err != nil {
+		return nil, err
+	}
+	api.RegisterLogServer(gsrv, srv)
+	return gsrv, nil
+}
+
 func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (*api.ProduceResponse, error) {
 	offset, err := s.CommitLog.Append(req.Record)
 	if err != nil {
@@ -38,11 +49,11 @@ func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (*api
 }
 
 func (s *grpcServer) Consume(ctx context.Context, req *api.ConsumeRequest) (*api.ConsumeResponse, error) {
-	recoed, err := s.CommitLog.Read(req.Offset)
+	record, err := s.CommitLog.Read(req.Offset)
 	if err != nil {
 		return nil, err
 	}
-	return &api.ConsumeResponse{Record: recoed}, nil
+	return &api.ConsumeResponse{Record: record}, nil
 }
 
 func (s *grpcServer) ProduceStream(stream api.Log_ProduceStreamServer) error {
