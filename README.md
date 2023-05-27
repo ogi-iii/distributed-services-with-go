@@ -6,3 +6,15 @@ Practice based on the book
 
 - Golang 1.19
 - Protocol Buffer Compiler 3.21
+
+## Build
+
+```bash
+make compile
+```
+
+## Unit Test
+
+```bash
+make test
+```
