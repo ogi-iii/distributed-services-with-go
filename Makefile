@@ -5,6 +5,7 @@ export CONFIG_DIR=${CONFIG_PATH}
 .PHONY: init # コマンド実行のためのダミーターゲット名定義
 init:
 	mkdir -p ${CONFIG_PATH}
+	rm ${CONFIG_PATH}/*
 
 .PHONY: gencert
 gencert:
@@ -26,9 +27,19 @@ gencert:
 		-ca-key=ca-key.pem \
 		-config=test/ca-config.json \
 		-profile=client \
+		-cn="root" \
 		test/client-csr.json | \
 		cfssljson \
-			-bare client
+			-bare root-client
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=test/ca-config.json \
+		-profile=client \
+		-cn="nobody" \
+		test/client-csr.json | \
+		cfssljson \
+			-bare nobody-client
 	mv *.pem *.csr ${CONFIG_PATH}
 
 .PHONY: test
