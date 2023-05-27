@@ -6,6 +6,8 @@ export CONFIG_DIR=${CONFIG_PATH}
 init:
 	mkdir -p ${CONFIG_PATH}
 	rm ${CONFIG_PATH}/*
+	cp test/model.conf ${CONFIG_PATH}
+	cp test/policy.csv ${CONFIG_PATH}
 
 .PHONY: gencert
 gencert:
