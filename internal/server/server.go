@@ -51,7 +51,7 @@ func authenticate(ctx context.Context) (context.Context, error) {
 		return context.WithValue(ctx, subjectContextKey{}, ""), nil
 	}
 	tlsInfo := peer.AuthInfo.(credentials.TLSInfo)
-	subject := tlsInfo.State.VerifiedChains[0][0].Subject.CommonName
+	subject := tlsInfo.State.VerifiedChains[0][0].Subject.CommonName // クライアント証明におけるCNを抽出
 	ctx = context.WithValue(ctx, subjectContextKey{}, subject)
 	return ctx, nil
 }
@@ -74,7 +74,7 @@ func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, err
 	opts = append(opts,
 		grpc.StreamInterceptor(
 			grpc_middleware.ChainStreamServer(
-				grpc_auth.StreamServerInterceptor(authenticate),
+				grpc_auth.StreamServerInterceptor(authenticate), // サーバのctxをインターセプトしてauthenticateメソッドを実行
 			),
 		),
 		grpc.UnaryInterceptor(
