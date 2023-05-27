@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/casbin/casbin v1.9.1
 	github.com/gorilla/mux v1.8.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/stretchr/testify v1.8.3
 	github.com/tysonmote/gommap v0.0.2
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4

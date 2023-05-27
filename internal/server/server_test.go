@@ -7,11 +7,14 @@ import (
 	"testing"
 
 	api "github.com/ogi-iii/proglog/api/v1"
+	"github.com/ogi-iii/proglog/internal/auth"
 	"github.com/ogi-iii/proglog/internal/config"
 	"github.com/ogi-iii/proglog/internal/log"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 var testScenarios = map[string]func(
@@ -23,6 +26,7 @@ var testScenarios = map[string]func(
 	"produce/consume a message to/from the log scceeds": testProduceConsume,
 	"produce/consume stream succeeds":                   testProduceConsumeStream,
 	"consume past log boundary fails":                   testConsumePastBoundary,
+	"unauthorized fails":                                testUnauthorized,
 }
 
 func TestServer(t *testing.T) {
@@ -102,8 +106,10 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	require.NoError(t, err)
 	clog, err := log.NewLog(dir, log.Config{})
 	require.NoError(t, err)
+	authorizer := auth.New(config.ACLModelFile, config.ACLPolicyFile)
 	cfg = &Config{
-		CommitLog: clog,
+		CommitLog:  clog,
+		Authorizer: authorizer,
 	}
 	if fn != nil {
 		fn(cfg)
@@ -232,5 +238,37 @@ func testProduceConsumeStream(t *testing.T, client, _ api.LogClient, config *Con
 				},
 			)
 		}
+	}
+}
+
+func testUnauthorized(t *testing.T, _, client api.LogClient, config *Config) {
+	ctx := context.Background()
+	produce, err := client.Produce(
+		ctx,
+		&api.ProduceRequest{
+			Record: &api.Record{
+				Value: []byte("Hello, world!"),
+			},
+		},
+	)
+	if produce != nil {
+		t.Fatalf("produce response should be nil")
+	}
+	gotCode, wantCode := status.Code(err), codes.PermissionDenied
+	if gotCode != wantCode {
+		t.Fatalf("got code: %d, want: %d", gotCode, wantCode)
+	}
+	consume, err := client.Consume(
+		ctx,
+		&api.ConsumeRequest{
+			Offset: 0,
+		},
+	)
+	if consume != nil {
+		t.Fatalf("consume response should be nil")
+	}
+	gotCode, wantCode = status.Code(err), codes.PermissionDenied
+	if gotCode != wantCode {
+		t.Fatalf("got code: %d, want: %d", gotCode, wantCode)
 	}
 }

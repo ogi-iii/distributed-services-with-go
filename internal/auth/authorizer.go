@@ -24,7 +24,8 @@ func New(model, policy string) *Authorizer {
 }
 
 func (a *Authorizer) Authorize(subject, object, action string) error {
-	if a.enforcer.Enforce(subject, object, action) {
+	// ACLの許可条件と一致するかを確認: "!"で否定することにより,不一致の場合にパーミッションエラーを発出させる
+	if !a.enforcer.Enforce(subject, object, action) {
 		msg := fmt.Sprintf(
 			"%s not permitted to %s to %s",
 			subject,
