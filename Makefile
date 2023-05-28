@@ -47,7 +47,8 @@ gencert:
 .PHONY: test
 test:
 	make gencert
-	go test -race ./...
+	go test -v -race ./...
+	go test ./internal/server -v -debug=true
 
 .PHONY: compile
 compile:
