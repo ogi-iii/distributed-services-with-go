@@ -58,6 +58,7 @@ func (m *Membership) setupSerf() (err error) {
 	}
 	go m.eventHandler()
 	if m.StartJoinAddrs != nil {
+		// アドレスに自身のノード情報をイベントとして送信し、相手からのノード情報をイベントとして受け取ることで、相互接続を確立
 		_, err = m.serf.Join(m.StartJoinAddrs, true)
 		if err != nil {
 			return err
@@ -115,6 +116,7 @@ func (m *Membership) Members() []serf.Member {
 }
 
 func (m *Membership) Leave() error {
+	// 自身のノード情報をクラスタ内ノード群にイベントとして送信する
 	return m.serf.Leave()
 }
 
