@@ -32,8 +32,8 @@ type Agent struct {
 }
 
 type Config struct {
-	ServerTLSConfig *tls.Config
-	PeerTLSConfig   *tls.Config
+	ServerTLSConfig *tls.Config // local grpc server config
+	PeerTLSConfig   *tls.Config // grpc client config connecting to other servers
 	DataDir         string
 	BindAddr        string
 	RPCPort         int
@@ -118,7 +118,7 @@ func (a *Agent) setupServer() error {
 	if err != nil {
 		return err
 	}
-	// run the server
+	// run the local server
 	go func() {
 		if err = a.server.Serve(ln); err != nil {
 			_ = a.Shutdown()
@@ -147,7 +147,7 @@ func (a *Agent) setupMembership() error {
 	}
 	// generate client to local server
 	client := api.NewLogClient(conn)
-	// generate replicator with the credentials to other servers
+	// generate replicator with the credentials to other servers & client for local server
 	a.replicator = &log.Replicator{
 		DialOptions: opts,
 		LocalServer: client,
@@ -177,12 +177,12 @@ func (a *Agent) Shutdown() error {
 	close(a.shutdowns)
 	shutdown := []func() error{
 		a.membership.Leave, // send events to other servers
-		a.replicator.Close, // stop replicating
+		a.replicator.Close, // stop replicating to local server
 		func() error {
 			a.server.GracefulStop() // shutdown the local server
 			return nil
 		},
-		a.log.Close, // close log file
+		a.log.Close, // close log files
 	}
 	for _, fn := range shutdown {
 		if err := fn(); err != nil {
