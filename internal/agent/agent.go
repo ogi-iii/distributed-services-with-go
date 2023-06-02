@@ -35,8 +35,8 @@ type Config struct {
 	ServerTLSConfig *tls.Config // local grpc server config
 	PeerTLSConfig   *tls.Config // grpc client config connecting to other servers
 	DataDir         string
-	BindAddr        string
-	RPCPort         int
+	BindAddr        string // for service discovery with Serf
+	RPCPort         int    // for replicating logs with gRPC
 	NodeName        string
 	StartJoinAddrs  []string
 	ACLModelFile    string
@@ -102,7 +102,7 @@ func (a *Agent) setupServer() error {
 	// pass the CA file as TLS credentials
 	if a.Config.ServerTLSConfig != nil {
 		creds := credentials.NewTLS(a.Config.ServerTLSConfig)
-		opts = append(opts, creds)
+		opts = append(opts, grpc.Creds(creds))
 	}
 	var err error
 	// generate server
