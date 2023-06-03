@@ -54,7 +54,7 @@ func (l *DistributedLog) setupRaft(dataDir string) error {
 	if err != nil {
 		return err
 	}
-	// stable store where Raft store the configurations of the cluster
+	// stable store where Raft stores the configurations of the cluster
 	stableStore, err := raftboltdb.NewBoltStore(
 		filepath.Join(dataDir, "raft", "stable"),
 	)
@@ -62,6 +62,7 @@ func (l *DistributedLog) setupRaft(dataDir string) error {
 		return err
 	}
 	retain := 1
+	// snapshot store where Raft stores compact snapshots of commands data: to restore the data efficiently
 	snapshotStore, err := raft.NewFileSnapshotStore(
 		filepath.Join(dataDir, "raft"),
 		retain,
@@ -72,6 +73,7 @@ func (l *DistributedLog) setupRaft(dataDir string) error {
 	}
 	maxPool := 5
 	timeout := 10 * time.Second
+	// transport that Raft uses to connect with the server's peers
 	transport := raft.NewNetworkTransport(
 		l.config.Raft.StreamLayer,
 		maxPool,
