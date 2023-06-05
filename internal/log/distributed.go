@@ -308,7 +308,7 @@ func (l *logStore) GetLog(index uint64, out *raft.Log) error { // pass the input
 	if err != nil {
 		return err
 	}
-	// set input data as output Raft log data
+	// set input data to output Raft log data
 	out.Data = in.Value
 	out.Index = in.Offset
 	out.Type = raft.LogType(in.Type)
