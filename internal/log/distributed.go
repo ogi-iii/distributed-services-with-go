@@ -67,7 +67,7 @@ func (l *DistributedLog) setupRaft(dataDir string) error {
 		return err
 	}
 	retain := 1
-	// snapshot store where Raft stores compact snapshots of commands data: to restore the data efficiently
+	// snapshot store where Raft stores compact the leader's snapshots of commands data: to restore the data efficiently
 	snapshotStore, err := raft.NewFileSnapshotStore(
 		filepath.Join(dataDir, "raft"),
 		retain,
@@ -151,27 +151,27 @@ func (l *DistributedLog) apply(reqType RequestType, req proto.Message) (
 	error,
 ) {
 	var buf bytes.Buffer
-	_, err := buf.Write([]byte{byte(reqType)})
+	_, err := buf.Write([]byte{byte(reqType)}) // 1 byte data
 	if err != nil {
 		return nil, err
 	}
-	b, err := proto.Marshal(req)
+	b, err := proto.Marshal(req) // protobuf -> bytes
 	if err != nil {
 		return nil, err
 	}
-	_, err = buf.Write(b)
+	_, err = buf.Write(b) // RequestType + data
 	if err != nil {
 		return nil, err
 	}
 	timeout := 10 * time.Second
 	// append log with Raft replication
-	future := l.raft.Apply(buf.Bytes(), timeout) // RequestType + data
+	future := l.raft.Apply(buf.Bytes(), timeout) // call fsm.Apply() internally
 	// Raft replication error handling
 	if future.Error() != nil {
 		return nil, future.Error()
 	}
 	res := future.Response()
-	// FSM Apply() error handling
+	// fsm.Apply() internal error handling
 	if err, ok := res.(error); ok {
 		return nil, err
 	}
@@ -179,10 +179,10 @@ func (l *DistributedLog) apply(reqType RequestType, req proto.Message) (
 }
 
 func (l *DistributedLog) Read(offset uint64) (*api.Record, error) {
-	return l.log.Read(offset)
+	return l.log.Read(offset) // read local log data directly
 }
 
-// finite-state machine in Raft
+// finite-state machine of Raft
 var _ raft.FSM = (*fsm)(nil)
 
 type fsm struct {
@@ -191,6 +191,7 @@ type fsm struct {
 
 type RequestType uint8 // 1 byte
 
+// multiple kinds of RequestType
 const (
 	AppendRequestType RequestType = 0
 )
@@ -240,37 +241,41 @@ func (s *snapshot) Persist(sink raft.SnapshotSink) error {
 	return sink.Close()
 }
 
-// delete the snapshot from sink
+// delete the snapshot from sink disc
 func (s *snapshot) Release() {}
 
+// restore data from the newest snapshot of leader node
 func (f *fsm) Restore(r io.ReadCloser) error {
-	b := make([]byte, lenWidth)
-	var buf bytes.Buffer
+	b := make([]byte, lenWidth) // data length
+	var buf bytes.Buffer        // data itself
 	for i := 0; ; i++ {
-		_, err := io.ReadFull(r, b)
+		_, err := io.ReadFull(r, b) // read data until the size of b
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return err
 		}
 		size := int64(enc.Uint64(b))
+		// copy data from 'r' to 'buf' until the length of 'size'
 		if _, err := io.CopyN(&buf, r, size); err != nil {
 			return err
 		}
 		record := &api.Record{}
+		// bytes -> protobuf
 		if err := proto.Unmarshal(buf.Bytes(), record); err != nil {
 			return err
 		}
+		// initial data handling
 		if i == 0 {
 			f.log.Config.Segment.InitialOffset = record.Offset
-			if err := f.log.Reset(); err != nil {
+			if err := f.log.Reset(); err != nil { // reset existing data in the local log
 				return err
 			}
 		}
 		if _, err := f.log.Append(record); err != nil {
 			return err
 		}
-		buf.Reset()
+		buf.Reset() // reset buffered data to prepare reading the next data
 	}
 	return nil
 }
