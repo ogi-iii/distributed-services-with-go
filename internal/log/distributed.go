@@ -322,7 +322,7 @@ func (l *logStore) StoreLog(record *raft.Log) error {
 
 func (l *logStore) StoreLogs(records []*raft.Log) error {
 	for _, record := range records {
-		// store as a Raft log
+		// store the Raft log as a record
 		if _, err := l.Append(&api.Record{
 			Value: record.Data,
 			Term:  record.Term,
