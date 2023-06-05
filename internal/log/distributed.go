@@ -197,7 +197,7 @@ const (
 )
 
 // apply committed Raft log (command history)
-func (f *fsm) Apply(record *raft.Log) interface{} {
+func (f *fsm) Apply(record *raft.Log) interface{} { // return struct or error
 	buf := record.Data
 	reqType := RequestType(buf[0]) // extract first 1 byte
 	switch reqType {
@@ -278,4 +278,62 @@ func (f *fsm) Restore(r io.ReadCloser) error {
 		buf.Reset() // reset buffered data to prepare reading the next data
 	}
 	return nil
+}
+
+var _ raft.LogStore = (*logStore)(nil)
+
+type logStore struct {
+	*Log
+}
+
+func newLogStore(dir string, c Config) (*logStore, error) {
+	log, err := NewLog(dir, c)
+	if err != nil {
+		return nil, err
+	}
+	return &logStore{log}, err // wrap the record log as logStore
+}
+
+func (l *logStore) FirstIndex() (uint64, error) {
+	return l.LowestOffset()
+}
+
+func (l *logStore) LastIndex() (uint64, error) {
+	off, err := l.HighestOffset()
+	return off, err
+}
+
+func (l *logStore) GetLog(index uint64, out *raft.Log) error { // pass the input offset & the output blank Raft log
+	in, err := l.Read(index)
+	if err != nil {
+		return err
+	}
+	// set input data as output Raft log data
+	out.Data = in.Value
+	out.Index = in.Offset
+	out.Type = raft.LogType(in.Type)
+	out.Term = in.Term
+	return nil
+}
+
+func (l *logStore) StoreLog(record *raft.Log) error {
+	return l.StoreLogs([]*raft.Log{record})
+}
+
+func (l *logStore) StoreLogs(records []*raft.Log) error {
+	for _, record := range records {
+		// store as a Raft log
+		if _, err := l.Append(&api.Record{
+			Value: record.Data,
+			Term:  record.Term,
+			Type:  uint32(record.Type),
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (l *logStore) DeleteRange(min, max uint64) error {
+	return l.Truncate(max) // delete up to max offsets
 }
