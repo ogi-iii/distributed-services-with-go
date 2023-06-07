@@ -384,7 +384,7 @@ func (s *StreamLayer) Dial(
 }
 
 func (s *StreamLayer) Accept() (net.Conn, error) {
-	conn, err := s.ln.Accept()
+	conn, err := s.ln.Accept() // server's listener accept the incoming connection
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func (s *StreamLayer) Accept() (net.Conn, error) {
 	}
 	// check the Raft connection type
 	if bytes.Compare([]byte{byte(RaftRPC)}, b) != 0 {
-		return nil, fmt.Errorf("not a valid raft rpc")
+		return nil, fmt.Errorf("not a valid raft rpc connection type")
 	}
 	if s.serverTLSConfig != nil {
 		return tls.Server(conn, s.serverTLSConfig), nil // server for incoming TLS connection
