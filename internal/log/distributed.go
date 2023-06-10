@@ -422,7 +422,7 @@ func NewStreamLayer(
 	}
 }
 
-const RaftRPC = 1 // Raft RPC identifier
+const RaftRPC = 1 // Raft RPC identifier: differentiate the Raft internal connection from the gRPC external connection
 
 func (s *StreamLayer) Dial(
 	addr raft.ServerAddress, // other Raft server's address
@@ -433,7 +433,7 @@ func (s *StreamLayer) Dial(
 	if err != nil {
 		return nil, err
 	}
-	_, err = conn.Write([]byte{byte(RaftRPC)}) // identify the connection type (for multiplex Raft)
+	_, err = conn.Write([]byte{byte(RaftRPC)}) // identify the connection type (for multiplex of Raft & gRPC connection)
 	if err != nil {
 		return nil, err
 	}

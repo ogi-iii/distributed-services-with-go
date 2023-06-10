@@ -60,6 +60,7 @@ func TestAgent(t *testing.T) {
 			ACLPolicyFile:   config.ACLPolicyFile,
 			ServerTLSConfig: serverTLSConfig,
 			PeerTLSConfig:   peerTLSConfig,
+			Bootstrap:       i == 0,
 		})
 		require.NoError(t, err)
 		agents = append(agents, agent)
@@ -105,18 +106,18 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []byte("Hello, world!"), consumeResponse.Record.Value)
 
-	// // The below test will fail: The replicator does NOT coordinate the servers as leader-follower relationship. (Data replication will be in a cycle.)
-	// consumeResponse, err = leaderClient.Consume(
-	// 	context.Background(),
-	// 	&api.ConsumeRequest{
-	// 		Offset: produceResponse.Offset + 1, // not produced record
-	// 	},
-	// )
-	// require.Nil(t, consumeResponse)
-	// require.Error(t, err)
-	// got := grpc.Code(err)
-	// want := grpc.Code(api.ErrOffsetOutOfRange{}.GRPCStatus().Err())
-	// require.Equal(t, got, want)
+	// check the Raft replicator coordinates the servers as leader-follower relationship: the leader does NOT replicate from the followers
+	consumeResponse, err = leaderClient.Consume(
+		context.Background(),
+		&api.ConsumeRequest{
+			Offset: produceResponse.Offset + 1, // not produced record
+		},
+	)
+	require.Nil(t, consumeResponse)
+	require.Error(t, err)
+	got := grpc.Code(err)
+	want := grpc.Code(api.ErrOffsetOutOfRange{}.GRPCStatus().Err())
+	require.Equal(t, got, want)
 }
 
 // generate the gRPC client to connect an agent
