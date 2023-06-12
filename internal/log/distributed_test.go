@@ -78,10 +78,28 @@ func TestMultipleNodes(t *testing.T) {
 			return true
 		}, 500*time.Millisecond, 50*time.Millisecond) // repeat checking
 	}
+
+	// check to get servers in the Raft cluster
+	servers, err := logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 3, len(servers))
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
+	require.False(t, servers[2].IsLeader)
+
 	// remove the Raft follower node from the cluster
-	err := logs[0].Leave("1")
+	err = logs[0].Leave("1")
 	require.NoError(t, err)
 	time.Sleep(50 * time.Millisecond)
+
+	// check to get servers again
+	servers, err = logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(servers)) // a follower was left from the Raft cluster
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
+
+	// append an additional record to the Raft cluster
 	off, err := logs[0].Append(&api.Record{
 		Value: []byte("third"),
 	})
