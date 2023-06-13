@@ -26,7 +26,7 @@ type LogClient interface {
 	Consume(ctx context.Context, in *ConsumeRequest, opts ...grpc.CallOption) (*ConsumeResponse, error)
 	ConsumeStream(ctx context.Context, in *ConsumeRequest, opts ...grpc.CallOption) (Log_ConsumeStreamClient, error)
 	ProduceStream(ctx context.Context, opts ...grpc.CallOption) (Log_ProduceStreamClient, error)
-	GetServers(ctx context.Context, in *GetServerRequest, opts ...grpc.CallOption) (*GetServerResponse, error)
+	GetServers(ctx context.Context, in *GetServersRequest, opts ...grpc.CallOption) (*GetServersResponse, error)
 }
 
 type logClient struct {
@@ -118,8 +118,8 @@ func (x *logProduceStreamClient) Recv() (*ProduceResponse, error) {
 	return m, nil
 }
 
-func (c *logClient) GetServers(ctx context.Context, in *GetServerRequest, opts ...grpc.CallOption) (*GetServerResponse, error) {
-	out := new(GetServerResponse)
+func (c *logClient) GetServers(ctx context.Context, in *GetServersRequest, opts ...grpc.CallOption) (*GetServersResponse, error) {
+	out := new(GetServersResponse)
 	err := c.cc.Invoke(ctx, "/log.v1.Log/GetServers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ type LogServer interface {
 	Consume(context.Context, *ConsumeRequest) (*ConsumeResponse, error)
 	ConsumeStream(*ConsumeRequest, Log_ConsumeStreamServer) error
 	ProduceStream(Log_ProduceStreamServer) error
-	GetServers(context.Context, *GetServerRequest) (*GetServerResponse, error)
+	GetServers(context.Context, *GetServersRequest) (*GetServersResponse, error)
 	mustEmbedUnimplementedLogServer()
 }
 
@@ -155,7 +155,7 @@ func (UnimplementedLogServer) ConsumeStream(*ConsumeRequest, Log_ConsumeStreamSe
 func (UnimplementedLogServer) ProduceStream(Log_ProduceStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method ProduceStream not implemented")
 }
-func (UnimplementedLogServer) GetServers(context.Context, *GetServerRequest) (*GetServerResponse, error) {
+func (UnimplementedLogServer) GetServers(context.Context, *GetServersRequest) (*GetServersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServers not implemented")
 }
 func (UnimplementedLogServer) mustEmbedUnimplementedLogServer() {}
@@ -255,7 +255,7 @@ func (x *logProduceStreamServer) Recv() (*ProduceRequest, error) {
 }
 
 func _Log_GetServers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetServerRequest)
+	in := new(GetServersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func _Log_GetServers_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/log.v1.Log/GetServers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogServer).GetServers(ctx, req.(*GetServerRequest))
+		return srv.(LogServer).GetServers(ctx, req.(*GetServersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

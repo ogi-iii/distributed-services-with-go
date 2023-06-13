@@ -16,7 +16,7 @@ service Log {
     rpc Consume (ConsumeRequest) returns (ConsumeResponse) {}
     rpc ConsumeStream (ConsumeRequest) returns (stream ConsumeResponse) {}
     rpc ProduceStream (stream ProduceRequest) returns (stream ProduceResponse) {}
-    rpc GetServers (GetServerRequest) returns (GetServerResponse) {}
+    rpc GetServers (GetServersRequest) returns (GetServersResponse) {}
 }
 
 message ProduceRequest {
@@ -35,9 +35,9 @@ message ConsumeResponse {
     Record record = 2;
 }
 
-message GetServerRequest {}
+message GetServersRequest {}
 
-message GetServerResponse {
+message GetServersResponse {
     repeated Server servers = 1;
 }
 

@@ -138,8 +138,9 @@ func (a *Agent) setupServer() error {
 		a.Config.ACLPolicyFile,
 	)
 	serverConfig := &server.Config{
-		CommitLog:  a.log,
-		Authorizer: authorizer,
+		CommitLog:   a.log,
+		Authorizer:  authorizer,
+		GetServerer: a.log, // distributed log covers 2 interfaces: CommitLog & GetServerer
 	}
 	var opts []grpc.ServerOption
 	// pass the CA file as TLS credentials

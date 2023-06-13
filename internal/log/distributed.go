@@ -478,6 +478,7 @@ func (l *DistributedLog) GetServers() ([]*api.Server, error) {
 	}
 	var servers []*api.Server
 	for _, server := range future.Configuration().Servers {
+		// convert Raft server into api.Server
 		servers = append(servers, &api.Server{
 			Id:       string(server.ID),
 			RpcAddr:  string(server.Address),
