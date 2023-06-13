@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type Config struct {
+type Config struct { // gRPC server config has 3 kinds of interfaces
 	CommitLog   CommitLog
 	Authorizer  Authorizer
 	GetServerer GetServerer
