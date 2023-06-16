@@ -15,8 +15,8 @@ import (
 
 type Resolver struct {
 	mu            sync.Mutex
-	clientConn    resolver.ClientConn // resolver -> user's client: tell the state of service discovery for load-balancing
-	resolverConn  *grpc.ClientConn    // resolver -> gRPC servers cluster: service discovery
+	clientConn    resolver.ClientConn // resolver -> user's client: tell the state which is the result of service discovery for load-balancing
+	resolverConn  *grpc.ClientConn    // resolver -> a gRPC server in the cluster: service discovery
 	serviceConfig *serviceconfig.ParseResult
 	logger        *zap.Logger
 }
@@ -26,7 +26,7 @@ var _ resolver.Builder = (*Resolver)(nil)
 func (r *Resolver) Build(
 	target resolver.Target,
 	cc resolver.ClientConn,
-	opts resolver.BuildOptions,
+	opts resolver.BuildOptions, // options to connect a server in the cluster
 ) (resolver.Resolver, error) {
 	r.logger = zap.L().Named("resolver")
 	r.clientConn = cc // connection to the user's client

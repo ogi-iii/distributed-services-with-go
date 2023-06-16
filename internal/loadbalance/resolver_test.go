@@ -52,7 +52,7 @@ func TestResolver(t *testing.T) {
 	_, err = r.Build(
 		resolver.Target{
 			URL: url.URL{
-				Path: l.Addr().String(), // URL path to the servers in the cluster
+				Path: l.Addr().String(), // URL path to a server in the cluster
 			},
 		},
 		conn,
