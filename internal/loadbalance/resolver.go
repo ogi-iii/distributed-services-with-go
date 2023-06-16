@@ -45,7 +45,7 @@ func (r *Resolver) Build(
 	if err != nil {
 		return nil, err
 	}
-	r.ResolveNow(resolver.ResolveNowOptions{})
+	r.ResolveNow(resolver.ResolveNowOptions{}) // initial service discovery
 	return r, nil
 }
 
