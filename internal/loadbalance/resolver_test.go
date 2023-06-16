@@ -30,12 +30,12 @@ func TestResolver(t *testing.T) {
 	require.NoError(t, err)
 	serverCreds := credentials.NewTLS(tlsConfig)
 	srv, err := server.NewGRPCServer(&server.Config{
-		GetServerer: &getServers{},
+		GetServerer: &getServers{}, // mock
 	}, grpc.Creds(serverCreds))
 	require.NoError(t, err)
 	go srv.Serve(l)
 
-	conn := &clientConn{}
+	conn := &clientConn{} // mock
 	tlsConfig, err = config.SetupTLSConfig(config.TLSConfig{
 		CertFile:      config.RootClientCertFile,
 		KeyFile:       config.RootClientKeyFile,
@@ -74,6 +74,7 @@ func TestResolver(t *testing.T) {
 	require.Equal(t, wantState, conn.state)
 }
 
+// mock
 type getServers struct{}
 
 func (s *getServers) GetServers() ([]*api.Server, error) {
@@ -83,6 +84,7 @@ func (s *getServers) GetServers() ([]*api.Server, error) {
 	}, nil
 }
 
+// mock
 type clientConn struct {
 	resolver.ClientConn
 	state resolver.State
