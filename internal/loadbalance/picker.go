@@ -21,6 +21,7 @@ func init() {
 		base.NewBalancerBuilder(Name, &Picker{}, base.Config{})) // register as gRPC server connection picker
 }
 
+// checking Picker implements the interface: base.PickerBuilder
 var _ base.PickerBuilder = (*Picker)(nil)
 
 func (p *Picker) Build(buildInfo base.PickerBuildInfo) balancer.Picker {
@@ -39,6 +40,7 @@ func (p *Picker) Build(buildInfo base.PickerBuildInfo) balancer.Picker {
 	return p
 }
 
+// checking Picker implements the interface: balancer.Picker
 var _ balancer.Picker = (*Picker)(nil)
 
 func (p *Picker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
