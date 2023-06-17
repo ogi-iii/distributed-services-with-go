@@ -21,6 +21,12 @@ type Resolver struct {
 	logger        *zap.Logger
 }
 
+func init() {
+	resolver.Register(&Resolver{}) // register as gRPC server connection resolver
+}
+
+const Name = "proglog"
+
 var _ resolver.Builder = (*Resolver)(nil)
 
 func (r *Resolver) Build(
@@ -49,14 +55,8 @@ func (r *Resolver) Build(
 	return r, nil
 }
 
-const Name = "proglog"
-
 func (r *Resolver) Scheme() string {
 	return Name // scheme identifier to find a resolver that matches
-}
-
-func init() {
-	resolver.Register(&Resolver{}) // register as gRPC resolver
 }
 
 var _ resolver.Resolver = (*Resolver)(nil)
