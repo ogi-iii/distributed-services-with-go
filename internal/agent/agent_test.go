@@ -13,6 +13,7 @@ import (
 
 	api "github.com/ogi-iii/proglog/api/v1"
 	"github.com/ogi-iii/proglog/internal/config"
+	"github.com/ogi-iii/proglog/internal/loadbalance"
 	"github.com/stretchr/testify/require"
 	"github.com/travisjeffery/go-dynaport"
 	"google.golang.org/grpc/credentials"
@@ -85,7 +86,10 @@ func TestAgent(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	// consume a record from leader node
+
+	time.Sleep(3 * time.Second) // for waiting the replication from the reader to followers
+
+	// try to consume a record from the leader: the consume request will be balanced to the other followers instead of the leader by our picker
 	consumeResponse, err := leaderClient.Consume(
 		context.Background(),
 		&api.ConsumeRequest{
@@ -95,7 +99,6 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []byte("Hello, world!"), consumeResponse.Record.Value)
 
-	time.Sleep(3 * time.Second) // for waiting the replication from leader node to other nodes
 	followerClient := client(t, agents[1], peerTLSConfig)
 	consumeResponse, err = followerClient.Consume(
 		context.Background(),
@@ -120,7 +123,7 @@ func TestAgent(t *testing.T) {
 	require.Equal(t, got, want)
 }
 
-// generate the gRPC client to connect an agent
+// generate the gRPC client to connect an agent: service discovery with resolver, load balancing with picker
 func client(
 	t *testing.T,
 	agent *Agent,
@@ -132,7 +135,15 @@ func client(
 	}
 	rpcAddr, err := agent.Config.RPCAddr()
 	require.NoError(t, err)
-	conn, err := grpc.Dial(fmt.Sprintf("%s", rpcAddr), opts...)
+	conn, err := grpc.Dial(
+		fmt.Sprintf(
+			"%s:///%s",
+			loadbalance.Name, // setup the scheme of our resolver for service discovery: the gRPC requests will be balanced by our picker
+			rpcAddr,
+		),
+		opts...,
+	)
+	// conn, err := grpc.Dial(fmt.Sprintf("%s", rpcAddr), opts...)
 	require.NoError(t, err)
 	client := api.NewLogClient(conn)
 	return client

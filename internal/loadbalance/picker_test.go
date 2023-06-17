@@ -33,7 +33,7 @@ func TestPickerNoSubConnAvailable(t *testing.T) {
 }
 
 func TestPickerProduceToLeader(t *testing.T) {
-	picker, subConns := setupTest() // setup as mock
+	picker, subConns := setupTest() // setup with mock sub-connections
 	info := balancer.PickInfo{
 		FullMethodName: produceMethod,
 	}
@@ -46,7 +46,7 @@ func TestPickerProduceToLeader(t *testing.T) {
 }
 
 func TestPickerConsumeFromFollowers(t *testing.T) {
-	picker, subConns := setupTest() // setup as mock
+	picker, subConns := setupTest() // setup with mock sub-connections
 	info := balancer.PickInfo{
 		FullMethodName: consumeMethod,
 	}
@@ -74,7 +74,7 @@ func setupTest() (*Picker, []*subConn) {
 		subConns = append(subConns, sc)
 	}
 	picker := &Picker{}
-	picker.Build(buildInfo)
+	picker.Build(buildInfo) // setup the sub-connections with a leader and some followers
 	return picker, subConns
 }
 
