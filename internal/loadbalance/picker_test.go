@@ -13,6 +13,7 @@ import (
 var (
 	produceMethod string = "/log.vX.Log/Produce"
 	consumeMethod string = "/log.vX.Log/Consume"
+	followersNum  int    = 3
 )
 
 func TestPickerNoSubConnAvailable(t *testing.T) {
@@ -32,7 +33,7 @@ func TestPickerNoSubConnAvailable(t *testing.T) {
 }
 
 func TestPickerProduceToLeader(t *testing.T) {
-	picker, subConns := setupTest()
+	picker, subConns := setupTest() // setup as mock
 	info := balancer.PickInfo{
 		FullMethodName: produceMethod,
 	}
@@ -45,7 +46,7 @@ func TestPickerProduceToLeader(t *testing.T) {
 }
 
 func TestPickerConsumeFromFollowers(t *testing.T) {
-	picker, subConns := setupTest()
+	picker, subConns := setupTest() // setup as mock
 	info := balancer.PickInfo{
 		FullMethodName: consumeMethod,
 	}
@@ -53,7 +54,7 @@ func TestPickerConsumeFromFollowers(t *testing.T) {
 		// receive consume request and each request will be balanced to the followers by round-robin
 		pick, err := picker.Pick(info)
 		require.NoError(t, err)
-		require.Equal(t, subConns[i%2+1], pick.SubConn) // balance with a follower
+		require.Equal(t, subConns[i%followersNum+1], pick.SubConn) // balance with all of the followers
 	}
 }
 
@@ -62,7 +63,7 @@ func setupTest() (*Picker, []*subConn) {
 	buildInfo := base.PickerBuildInfo{
 		ReadySCs: make(map[balancer.SubConn]base.SubConnInfo),
 	}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < followersNum+1; i++ { // loop the number of followers with a leader
 		sc := &subConn{} // mock
 		addr := resolver.Address{
 			Attributes: attributes.New("is_leader", i == 0),
