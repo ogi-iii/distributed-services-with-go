@@ -60,3 +60,7 @@ compile:
 		--go-grpc_opt=paths=source_relative \
 		--proto_path=.
 	go mod tidy
+
+TAG ?= 0.0.1
+build-docker:
+	docker build -t github.com/ogi-iii/proglog:$(TAG) .
