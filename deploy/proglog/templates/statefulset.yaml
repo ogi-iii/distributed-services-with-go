@@ -14,11 +14,11 @@ spec:
       name: {{ include "proglog.fullname" . }}
       labels: {{ include "proglog.labels" . | nindent 8 }}
     spec:
-      initContainers:
+      initContainers: # run previously to configure our StatefulSet's app containers
       - name: {{ include "proglog.fullname" . }}-config-init
         image: busybox
         imagePullPolicy: IfNotPresent
-        command:
+        command: # create the config file which will be read by our app containers
           - /bin/sh
           - -c
           - |-
@@ -30,10 +30,10 @@ spec:
             bootstrap: $([ $ID = 0 ] && echo true || echo false)
             $([ $ID != 0 ] && echo 'start-join-addrs: "proglog-0.proglog.{{.Release.Namespace}}.svc.cluster.local:{{.Values.serfPort}}"')
             EOD
-        volumeMounts:
+        volumeMounts: # put the config file on the mount-point
         - name: datadir
           mountPath: /var/run/proglog
-      containers:
+      containers: # run our StatefulSet's app containers with the config file
       - name: {{ include "proglog.fullname" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         ports:
@@ -44,7 +44,7 @@ spec:
         args:
           - --config-file=/var/run/proglog/config.yaml
         # probes...
-        volumeMounts:
+        volumeMounts: # read the config file from the mount-point
         - name: datadir
           mountPath: /var/run/proglog
   volumeClaimTemplates:
