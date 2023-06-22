@@ -18,6 +18,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
@@ -118,6 +120,11 @@ func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, err
 		),
 	)
 	gsrv := grpc.NewServer(opts...)
+
+	hsrv := health.NewServer()                                      // create a health-checking server for k8s probes
+	hsrv.SetServingStatus("", healthpb.HealthCheckResponse_SERVING) // alive and ready to accept the connections
+	healthpb.RegisterHealthServer(gsrv, hsrv)                       // register to be called the endpoint
+
 	srv, err := newGrpcServer(config)
 	if err != nil {
 		return nil, err
