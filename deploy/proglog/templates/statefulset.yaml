@@ -46,7 +46,7 @@ spec:
         readinessProbe: # health-check if the container is ready to accept the connections
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.rpcPort }}"]
-          initialDelaySeconds: 10
+          initialDelaySeconds: 5
         livenessProbe: # health-check if the container is alive
           exec:
             command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.prcPort }}"]

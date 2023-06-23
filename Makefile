@@ -64,3 +64,11 @@ compile:
 TAG ?= 0.0.1
 build-docker:
 	docker build -t github.com/ogi-iii/proglog:$(TAG) .
+
+deploy-local-cluster:
+	make build-docker
+	helm install proglog deploy/proglog
+
+listup-servers:
+	kubectl port-forward pod/proglog-0 8400 8400
+	go run cmd/getservers/main.go

@@ -6,7 +6,7 @@ metadata:
   labels: {{ include "proglog.labels" . | nindent 4 }}
 spec:
   clusterIP: None # headless service which doesn't have load balancer
-  publishNotReadyAddress: true
+  publishNotReadyAddresses: true
   ports:
     - name: rpc
       port: {{ .Values.rpcPort }}
